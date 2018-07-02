@@ -5,7 +5,7 @@ import 'github.com/OpenZeppelin/zeppelin-solidity/contracts/token/ERC20/Standard
 
 contract ESICToken is StandardToken {
     string public name = "Enterprise Service Improvement Chain";
-    string public symbol = "ESIC";
+    string public symbol = "ET";
     uint8 public decimals = 18;
     uint256 public INITIAL_SUPPLY = 10000000000000000000000000000;
 
