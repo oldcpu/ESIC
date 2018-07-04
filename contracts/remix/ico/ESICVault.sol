@@ -37,12 +37,6 @@ contract ESICVault is Ownable {
     uint256 public teamVestingStages = 48;
     uint256 public advisorTimeLock = 4 * 365 days;
     uint256 public advisorVestingStages = 48;
-    uint256 public developerTimeLock = 0 minutes;
-    uint256 public serviceTimeLock = 0 minutes;
-    uint256 public enterpriseTimeLock = 0 minutes;
-    uint256 public cornerTimeLock = 0 minutes;
-    uint256 public institutionalTimeLock = 0 minutes;
-    uint256 public privateTimeLock = 0 minutes;
 
     /** Reserve allocations */
     mapping(address => uint256) public allocations;
@@ -83,15 +77,6 @@ contract ESICVault is Ownable {
     //Only ESIC advisor reserve wallet
     modifier onlyAdvisorReserve {
         require(msg.sender == advisorReserveWallet);
-        require(allocations[msg.sender] > 0);
-        _;
-    }
-
-    //Only non-vesting token reserve wallets
-    modifier onlyTokenReserve {
-        require(msg.sender == developerReserveWallet || msg.sender == serviceReserveWallet
-          || msg.sender == enterpriseReserveWallet || msg.sender == cornerReserveWallet
-          || msg.sender == institutionalReserveWallet|| msg.sender == privateReserveWallet);
         require(allocations[msg.sender] > 0);
         _;
     }
@@ -149,6 +134,7 @@ contract ESICVault is Ownable {
         emit Allocated(privateReserveWallet, privateReserveAllocation);
 
         lock();
+        distribute();
     }
 
     //Lock the vault for the three wallets
@@ -158,12 +144,6 @@ contract ESICVault is Ownable {
 
         timeLocks[teamReserveWallet] = lockedAt.add(teamTimeLock);
         timeLocks[advisorReserveWallet] = lockedAt.add(advisorTimeLock);
-        timeLocks[developerReserveWallet] = lockedAt.add(developerTimeLock);
-        timeLocks[serviceReserveWallet] = lockedAt.add(serviceTimeLock);
-        timeLocks[enterpriseReserveWallet] = lockedAt.add(enterpriseTimeLock);
-        timeLocks[cornerReserveWallet] = lockedAt.add(cornerTimeLock);
-        timeLocks[institutionalReserveWallet] = lockedAt.add(institutionalTimeLock);
-        timeLocks[privateReserveWallet] = lockedAt.add(privateTimeLock);
 
         emit Locked(lockedAt);
     }
@@ -190,15 +170,26 @@ contract ESICVault is Ownable {
 
     }
 
-    //Claim tokens for first/second reserve wallets
-    function claimTokenReserve() onlyTokenReserve locked public {
+    //Distribute tokens for non-vesting reserve wallets
+    function distribute() onlyOwner locked public {
+        claimTokenReserve(developerReserveWallet);
+        claimTokenReserve(serviceReserveWallet);
+        claimTokenReserve(enterpriseReserveWallet);
+        claimTokenReserve(cornerReserveWallet);
+        claimTokenReserve(institutionalReserveWallet);
+        claimTokenReserve(privateReserveWallet);
+    }
 
-        address reserveWallet = msg.sender;
+    //Claim tokens for non-vesting reserve wallets
+    function claimTokenReserve(address reserveWallet) internal onlyOwner locked {
 
-        // Can't claim before Lock ends
-        require(block.timestamp > timeLocks[reserveWallet]);
+        require(reserveWallet == developerReserveWallet || reserveWallet == serviceReserveWallet
+          || reserveWallet == enterpriseReserveWallet || reserveWallet == cornerReserveWallet
+          || reserveWallet == institutionalReserveWallet|| reserveWallet == privateReserveWallet);
+
 
         // Must Only claim once
+        require(allocations[reserveWallet] > 0);
         require(claimed[reserveWallet] == 0);
 
         uint256 amount = allocations[reserveWallet];
@@ -287,12 +278,4 @@ contract ESICVault is Ownable {
         return stage;
 
     }
-
-    // Checks if msg.sender can collect tokens
-    function canCollect() public view onlyReserveWallets returns(bool) {
-
-        return block.timestamp > timeLocks[msg.sender] && claimed[msg.sender] == 0;
-
-    }
-
 }
