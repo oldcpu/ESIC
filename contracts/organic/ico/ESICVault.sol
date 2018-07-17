@@ -328,8 +328,6 @@ contract ESICVault is Ownable {
         //Amount of tokens the team should have at this vesting stage
         uint256 totalUnlocked = vestingStage.mul(allocations[teamReserveWallet]).div(teamVestingStages);
 
-        require(totalUnlocked <= allocations[teamReserveWallet]);
-
         //Previously claimed tokens must be less than what is unlocked
         require(claimed[teamReserveWallet] < totalUnlocked);
 
@@ -345,7 +343,7 @@ contract ESICVault is Ownable {
     //Current Vesting stage for ESIC team
     function teamVestingStage() public view returns(uint256){
 
-        // Every 3 months
+        // Every month
         uint256 vestingMonths = teamTimeLock.div(teamVestingStages);
 
         uint256 stage = (block.timestamp.sub(lockedAt)).div(vestingMonths);
@@ -366,8 +364,6 @@ contract ESICVault is Ownable {
 
         //Amount of tokens the team should have at this vesting stage
         uint256 totalUnlocked = vestingStage.mul(allocations[advisorReserveWallet]).div(advisorVestingStages);
-
-        require(totalUnlocked <= allocations[advisorReserveWallet]);
 
         //Previously claimed tokens must be less than what is unlocked
         require(claimed[advisorReserveWallet] < totalUnlocked);
